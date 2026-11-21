@@ -11,6 +11,8 @@
   // ---------- auth ----------
   const Auth = (PH.Auth = {});
   Auth.loginAs = (id) => { const u = PH.userById(id); PH.assert(u, 'Unknown user'); PH.session.set({ userId: id }); const v = u.vendorId && PH.vendor(u.vendorId); if (v && v.status === 'active') S.Gov.recordActivity(v.id); PH.Store.save(); return u; };
+  // a two-column layout whose side column is empty becomes a single full-width column
+  App.tidyLayout = () => { document.querySelectorAll('.g-main').forEach((g) => { const side = g.children[1]; g.classList.toggle('solo', !!side && !side.textContent.trim() && !side.querySelector('img,svg,canvas,input,button,table')); }); };
   Auth.logout = () => { PH.session.set(null); UI.state.pop = null; location.hash = '#/'; App.render(); };
 
   // ---------- navigation ----------
@@ -46,7 +48,7 @@
       if (v && v.status === 'dormant' && !['/dashboard', '/profile', '/tickets', '/notifications', '/performance'].some((x) => p === x || p.startsWith(x + '/'))) body = UI.pageHead({ title: 'Account dormant' }) + UI.card({ cls: 'warn', body: UI.banner('warn', '⏸', 'Your account is dormant. <a href="#/profile">Request reactivation</a>.') });
       else { try { const out = m.r.fn(m.params, u); body = typeof out === 'string' ? out : out.html; } catch (e) { console.error(e); body = UI.pageHead({ title: 'Something went wrong' }) + UI.card({ cls: 'err', body: UI.banner('err', '⚠', '<b>' + esc(e.message) + '</b>') }); } }
     }
-    root.innerHTML = shell(u, body); document.title = (App.title || 'Source2Pay') + ' · Source2Pay'; App.title = null;
+    root.innerHTML = shell(u, body); App.tidyLayout(); document.title = (App.title || 'Source2Pay') + ' · Source2Pay'; App.title = null;
     if (UI.state.pop) App.popover(UI.state.pop);
     window.scrollTo(0, App._keepScroll ? y : 0); App._keepScroll = false;
   };
