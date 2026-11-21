@@ -10,6 +10,8 @@
       return { getItem: (k) => (k in mem ? mem[k] : null), setItem: (k, v) => { mem[k] = String(v); }, removeItem: (k) => { delete mem[k]; } };
     }
   })();
+  // the signed-in role lives in sessionStorage: every fresh visit (new tab or link click) lands on the role picker; sample data stays in localStorage
+  const ss = (() => { try { const x = g.sessionStorage; x.setItem('__t', '1'); x.removeItem('__t'); return x; } catch (e) { return ls; } })();
   PH.storageOK = ls === g.localStorage;
 
   const Store = (PH.Store = { db: null, actor: null });
@@ -31,7 +33,7 @@
     Store.save();
   };
   Store.reset = function () { Store.reseed(); };
-  Store.clearAll = function () { try { ls.removeItem(KEY); ls.removeItem(SKEY); } catch (e) { /* ignore */ } };
+  Store.clearAll = function () { try { ls.removeItem(KEY); ls.removeItem(SKEY); ss.removeItem(SKEY); } catch (e) { /* ignore */ } };
   Store.sizeKB = function () { try { return Math.round(JSON.stringify(Store.db).length / 1024); } catch (e) { return 0; } };
 
   PH.db = () => Store.db;
@@ -71,8 +73,8 @@
 
   // ---------- session / actor ----------
   PH.session = {
-    get: () => { try { return JSON.parse(ls.getItem(SKEY) || 'null'); } catch (e) { return null; } },
-    set: (v) => { try { v ? ls.setItem(SKEY, JSON.stringify(v)) : ls.removeItem(SKEY); } catch (e) { /* ignore */ } },
+    get: () => { try { return JSON.parse(ss.getItem(SKEY) || 'null'); } catch (e) { return null; } },
+    set: (v) => { try { v ? ss.setItem(SKEY, JSON.stringify(v)) : ss.removeItem(SKEY); } catch (e) { /* ignore */ } },
   };
   PH.userById = (id) => (Store.db.users || []).find((u) => u.id === id) || null;
   PH.me = () => {

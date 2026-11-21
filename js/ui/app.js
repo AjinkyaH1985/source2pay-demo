@@ -155,6 +155,7 @@
     try { const th = localStorage.getItem('ph.theme'); if (th) document.documentElement.setAttribute('data-theme', th); } catch (e) { /* ignore */ }
     PH.Store.load();
     if (!PH.me() && PH.session.get()) PH.session.set(null);
+    if (!PH.me() && location.hash && location.hash !== '#/') { try { history.replaceState(null, '', location.pathname + location.search + '#/'); } catch (e) { /* ignore */ } }
     App.render();
     if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
   };
