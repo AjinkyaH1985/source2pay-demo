@@ -16,11 +16,11 @@
   U.num = (v) => { const n = parseFloat(String(v == null ? '' : v).replace(/,/g, '')); return isNaN(n) ? 0 : n; };
   U.round = (n, d = 2) => { const m = Math.pow(10, d); return Math.round((Number(n) + Number.EPSILON) * m) / m; };
   U.sum = (arr, f) => arr.reduce((a, x) => a + (f ? f(x) : x), 0);
-  U.inr = (n, d = 0) => '₹ ' + Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: d, maximumFractionDigits: d });
+  U.inr = (n, d = 0) => '₹ ' + Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: d, maximumFractionDigits: d });
   U.inrC = (n) => {
     n = Number(n || 0); const a = Math.abs(n);
-    if (a >= 1e7) return '₹ ' + U.round(n / 1e7, 2) + ' Cr';
-    if (a >= 1e5) return '₹ ' + U.round(n / 1e5, 2) + ' L';
+    if (a >= 1e7) return '₹ ' + U.round(n / 1e7, 2) + ' Cr';
+    if (a >= 1e5) return '₹ ' + U.round(n / 1e5, 2) + ' L';
     return U.inr(n);
   };
   U.pct = (n, d = 0) => U.round(n, d) + '%';

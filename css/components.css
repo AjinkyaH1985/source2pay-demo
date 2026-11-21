@@ -84,14 +84,14 @@ a.kpi:hover { text-decoration: none; transform: translateY(-2px); box-shadow: va
 /* ---- avatar, progress, misc ---- */
 .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--brand); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex: none; } .avatar.lg { width: 44px; height: 44px; font-size: 15px; } .avatar.sm { width: 24px; height: 24px; font-size: 10px; }
 .bar { height: 8px; background: var(--bg-sunken); border-radius: 999px; overflow: hidden; } .bar > i { display: block; height: 100%; background: var(--brand); border-radius: 999px; } .bar.ok > i { background: var(--ok); } .bar.warn > i { background: var(--warn); } .bar.err > i { background: var(--err); }
-.kv { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 7px 14px; font-size: 13.5px; } .kv dt { color: var(--text-3); font-size: 12.5px; padding-top: 1px; } .kv dd { margin: 0; word-break: break-word; }
+.kv { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 7px 14px; font-size: 13.5px; } .kv dt { color: var(--text-3); font-size: 12.5px; padding-top: 1px; } .kv dd { margin: 0; overflow-wrap: break-word; }
 .kv.wide { grid-template-columns: 190px minmax(0, 1fr); } @media (max-width: 640px) { .kv, .kv.wide { grid-template-columns: 1fr; gap: 0 } .kv dt { margin-top: 8px } }
 .msg { padding: 10px 12px; border-radius: var(--r); background: var(--bg-sunken); border: 1px solid var(--line); margin-bottom: 8px; font-size: 13.5px; } .msg.me { background: var(--brand-50); border-color: var(--brand-100); } .msg.internal { background: var(--warn-bg); border-style: dashed; } .msg .who { font-size: 12px; color: var(--text-3); margin-bottom: 3px; display: flex; gap: 8px; align-items: center; }
 .score { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 13px; } .score.hi { background: var(--ok-bg); color: var(--ok); } .score.mid { background: var(--warn-bg); color: var(--warn); } .score.lo { background: var(--err-bg); color: var(--err); }
 .spark { display: flex; align-items: flex-end; gap: 3px; height: 34px; } .spark i { flex: 1; background: var(--brand-100); border-radius: 2px 2px 0 0; min-width: 5px; } .spark i:last-child { background: var(--brand); }
 .donut { position: relative; width: 120px; height: 120px; flex: none; } .donut .c { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; font-size: 22px; } .donut .c small { font-weight: 500; color: var(--text-3); font-size: 11px; }
 .legend { display: flex; flex-direction: column; gap: 6px; font-size: 13px; } .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 8px; }
-.hbar { display: grid; grid-template-columns: 130px minmax(0, 1fr) 48px; gap: 10px; align-items: center; font-size: 13px; margin: 7px 0; } .hbar .bar { height: 10px; }
+.hbar { display: grid; grid-template-columns: 130px minmax(0, 1fr) 92px; gap: 10px; align-items: center; font-size: 13px; margin: 7px 0; } .hbar .bar { height: 10px; }
 .docview { background: repeating-linear-gradient(45deg, var(--bg-sunken), var(--bg-sunken) 12px, var(--bg-elev) 12px, var(--bg-elev) 24px); border: 1px solid var(--line); border-radius: var(--r); min-height: 380px; position: relative; overflow: hidden; user-select: none; display: flex; align-items: center; justify-content: center; }
 .docview .wm { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; transform: rotate(-24deg); font-size: 20px; font-weight: 800; color: rgba(120,130,150,.25); text-align: center; line-height: 1.6; }
 .help-tip { display: inline-flex; width: 16px; height: 16px; border-radius: 50%; background: var(--gray-bg); color: var(--text-2); font-size: 11px; font-weight: 700; align-items: center; justify-content: center; cursor: help; }
@@ -104,3 +104,6 @@ a.kpi:hover { text-decoration: none; transform: translateY(-2px); box-shadow: va
 
 .modal-b table.tbl:not(.stack) { min-width: 520px; }
 .tbl-wrap { -webkit-overflow-scrolling: touch; }
+
+.hbar b.right, .hbar > :last-child { text-align: right; white-space: nowrap; }
+@media (min-width: 641px) { .tbl td.nw, .tbl td b.nw, .tbl td a.nw { white-space: nowrap; } .tbl td .sub { white-space: normal; } }

@@ -12,7 +12,7 @@
   const Auth = (PH.Auth = {});
   Auth.loginAs = (id) => { const u = PH.userById(id); PH.assert(u, 'Unknown user'); PH.session.set({ userId: id }); const v = u.vendorId && PH.vendor(u.vendorId); if (v && v.status === 'active') S.Gov.recordActivity(v.id); PH.Store.save(); return u; };
   // a two-column layout whose side column is empty becomes a single full-width column
-  App.tidyLayout = () => { document.querySelectorAll('.g-main').forEach((g) => { const side = g.children[1]; g.classList.toggle('solo', !!side && !side.textContent.trim() && !side.querySelector('img,svg,canvas,input,button,table')); }); };
+  App.tidyLayout = () => { const cells = [...document.querySelectorAll('table.tbl td')].map((td) => [td, Math.max(0, ...td.innerText.split(String.fromCharCode(10)).map((x) => x.trim().length))]); cells.forEach(([td, n]) => td.classList.toggle('nw', n <= 34)); document.querySelectorAll('table.tbl td b, table.tbl td a').forEach((e) => { if (!e.children.length) e.classList.toggle('nw', e.textContent.trim().length <= 26); }); document.querySelectorAll('.g-main').forEach((g) => { const side = g.children[1]; g.classList.toggle('solo', !!side && !side.textContent.trim() && !side.querySelector('img,svg,canvas,input,button,table')); }); };
   Auth.logout = () => { PH.session.set(null); UI.state.pop = null; location.hash = '#/'; App.render(); };
 
   // ---------- navigation ----------
