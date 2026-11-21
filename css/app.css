@@ -113,3 +113,23 @@
 @media (max-width: 900px) { .login-hero h1 { font-size: clamp(21px, 6vw, 28px); } .hero-sub { font-size: 14px; } .login-flow { margin-top: 22px; } .login-hero .hero-foot { margin-top: 22px; } }
 @media (max-width: 420px) { .login-flow li { padding: 9px 10px; } .login-flow b { font-size: 13px; } }
 .login-hero { gap: 36px; }
+
+/* ---- price comparison: horizontal scrolling that behaves ---- */
+.cmp-wrap { overscroll-behavior-x: contain; scrollbar-width: thin; }
+.cmp thead th.lab { position: sticky; left: 0; z-index: 7; min-width: 190px; }
+.cmp thead th.vcol.refcol { text-align: left; min-width: 150px; font-family: inherit; }
+.cmp tbody th, .cmp thead th.lab { box-shadow: 1px 0 0 var(--line), 8px 0 10px -8px rgba(15,23,42,.22); }
+.cmp tr.grp th { box-shadow: none; position: static; }
+.cmp tr.grp .gl { position: sticky; left: 12px; display: inline-block; }
+@media (max-width: 640px) {
+  .cmp { width: max-content; min-width: 100%; font-size: 12.5px; }
+  .cmp th, .cmp td { padding: 8px 10px; }
+  .cmp tbody th, .cmp thead th.lab { min-width: 112px; width: 112px; max-width: 112px; white-space: normal; word-break: break-word; font-size: 12px; }
+  .cmp thead th.vcol { min-width: 146px; }
+  .cmp thead th.vcol.refcol { min-width: 126px; } .cmp td.small { max-width: 168px; white-space: normal; }
+  .cmp tr.grp th { padding: 6px 10px; }
+  .cmp tr.total td, .cmp tr.total th { font-size: 13px; }
+}
+
+.cmp thead th { position: static; } .cmp thead th.lab { position: sticky; left: 0; top: auto; }
+.cmp th, .cmp td { box-sizing: border-box; }
