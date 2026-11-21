@@ -1,0 +1,52 @@
+/* Source2Pay design tokens – light default, dark via [data-theme=dark] */
+:root {
+  --font: "Inter", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+  --bg: #f3f5f9; --bg-elev: #ffffff; --bg-sunken: #eceff5; --bg-hover: #f1f4fa;
+  --line: #e1e6ef; --line-strong: #cdd5e3;
+  --text: #1a2233; --text-2: #4a5568; --text-3: #7a869a; --text-inv: #ffffff;
+  --brand: #2257d6; --brand-600: #1b47b3; --brand-50: #e9f0ff; --brand-100: #d5e2ff;
+  --nav-bg: #0f1d3a; --nav-bg-2: #15264a; --nav-text: #b8c4de; --nav-active: #ffffff; --nav-accent: #5b8cff;
+  --ok: #138a5b; --ok-bg: #e3f6ee; --warn: #b36b00; --warn-bg: #fff3dc; --err: #c8372d; --err-bg: #fde8e6;
+  --info: #1b6ed6; --info-bg: #e6f0fd; --violet: #6b46c1; --violet-bg: #efe9fb; --teal: #0b7f86; --teal-bg: #dff4f5; --gray-bg: #eaedf3;
+  
+  --shadow-1: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.08);
+  --shadow-2: 0 8px 24px rgba(16,24,40,.12); --shadow-3: 0 20px 48px rgba(16,24,40,.22);
+  --r-sm: 6px; --r: 10px; --r-lg: 14px;
+  --sidebar-w: 252px; --topbar-h: 58px;
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --bg: #0c1220; --bg-elev: #141c2f; --bg-sunken: #0f1626; --bg-hover: #1a2440;
+  --line: #243049; --line-strong: #33415f;
+  --text: #e8edf7; --text-2: #b4bfd4; --text-3: #8391ab; --text-inv: #0c1220;
+  --brand: #6d96ff; --brand-600: #8aaeff; --brand-50: #172648; --brand-100: #1e3361;
+  --nav-bg: #0a1020; --nav-bg-2: #101a33; --nav-text: #93a2c4; --nav-active: #fff; --nav-accent: #6d96ff;
+  --ok: #3ccf91; --ok-bg: #0f2f25; --warn: #f0b24a; --warn-bg: #33270f; --err: #ff7b72; --err-bg: #3a1815;
+  --info: #6aa9ff; --info-bg: #11264a; --violet: #b69cff; --violet-bg: #251c47; --teal: #4fd1d9; --teal-bg: #0d2c30; --gray-bg: #1d2740;
+  --shadow-1: 0 1px 2px rgba(0,0,0,.4); --shadow-2: 0 8px 24px rgba(0,0,0,.45); --shadow-3: 0 20px 48px rgba(0,0,0,.6);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { font-family: var(--font); font-size: 14px; line-height: 1.5; color: var(--text); background: var(--bg); -webkit-font-smoothing: antialiased; }
+h1, h2, h3, h4 { margin: 0; font-weight: 650; letter-spacing: -.01em; color: var(--text); }
+h1 { font-size: 22px; } h2 { font-size: 17px; } h3 { font-size: 15px; } h4 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-3); font-weight: 650; }
+p { margin: 0 0 8px; } a { color: var(--brand); text-decoration: none; } a:hover { text-decoration: underline; }
+code, .mono { font-family: var(--mono); font-size: 12.5px; }
+small, .small { font-size: 12px; } .muted { color: var(--text-3); } .text2 { color: var(--text-2); } .right { text-align: right; } .center { text-align: center; } .nowrap { white-space: nowrap; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 14px 0; }
+::selection { background: var(--brand-100); }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; }
+button { font-family: inherit; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.hidden { display: none !important; }
+.row { display: flex; gap: 10px; align-items: center; } .row.wrap { flex-wrap: wrap; } .row.between { justify-content: space-between; } .row.top { align-items: flex-start; } .row.end { justify-content: flex-end; }
+.col { display: flex; flex-direction: column; gap: 10px; }
+.grow { flex: 1; min-width: 0; }
+.gap-sm { gap: 6px; } .gap-lg { gap: 18px; } .mt { margin-top: 12px; } .mt-lg { margin-top: 20px; } .mb { margin-bottom: 12px; }
+.grid { display: grid; gap: 14px; } .g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } .g5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.g-main { grid-template-columns: minmax(0, 1fr) 340px; align-items: start; }
+@media (max-width: 1100px) { .g4, .g5 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .g3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .g-main { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) { .g2, .g3 { grid-template-columns: minmax(0, 1fr); } .g4, .g5 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

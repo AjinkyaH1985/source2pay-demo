@@ -1,0 +1,1 @@
+{ "name": "Source2Pay", "short_name": "Source2Pay", "start_url": "./index.html", "display": "standalone", "background_color": "#0f1d3a", "theme_color": "#0f1d3a", "description": "Source to pay in one app (sample data).", "icons": [ { "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" } ] }
