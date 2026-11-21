@@ -99,7 +99,7 @@
     PH.Store.save(); return out;
   };
 
-  // ----- blacklist (buyer proposes → SCM Head approves; permanent) -----
+  // ----- blacklist (buyer proposes → Head of Procurement approves; permanent) -----
   Gov.proposeBlacklist = function (vendorId, reason) {
     PH.requireRole('buyer'); const v = PH.vendor(vendorId); PH.assert(v.status !== 'blacklisted', 'Vendor is already blacklisted.'); PH.assert(!v.blacklistRequest || v.blacklistRequest.status !== 'pending', 'A blacklist request is already pending.');
     PH.assert(reason && reason.trim().length >= 15, 'Give a detailed reason for blacklisting (min 15 characters).');
@@ -109,10 +109,10 @@
   Gov.decideBlacklist = function (vendorId, approve, remarks) {
     PH.requireRole('approver'); const v = PH.vendor(vendorId); PH.assert(v.blacklistRequest && v.blacklistRequest.status === 'pending', 'No pending blacklist request.');
     if (!approve) { PH.assert(remarks && remarks.trim().length >= 5, 'Remarks are required to decline.'); v.blacklistRequest.status = 'declined'; v.blacklistRequest.remarks = remarks; vhist(v, 'Blacklist declined: ' + remarks); return v; }
-    v.blacklistRequest.status = 'approved'; v.blacklistedAt = now(); Gov.setStatus(v, 'blacklisted', v.blacklistRequest.reason, 'SCM Head'); return v;
+    v.blacklistRequest.status = 'approved'; v.blacklistedAt = now(); Gov.setStatus(v, 'blacklisted', v.blacklistRequest.reason, 'Head of Procurement'); return v;
   };
 
-  // ----- reactivation (vendor → buyer → SCM Head) -----
+  // ----- reactivation (vendor → buyer → Head of Procurement) -----
   Gov.requestReactivation = function (vendorId, reason) {
     const v = PH.vendor(vendorId); PH.assert(v, 'Vendor not found.');
     PH.assert(v.status !== 'blacklisted', 'Blacklisted vendors are permanently blocked – there is no reactivation path.', 'FORBIDDEN');
@@ -124,12 +124,12 @@
   Gov.buyerReview = function (id, forward, remarks) {
     PH.requireRole('buyer'); const x = PH.byId('reactivations', id); PH.assert(x && x.status === 'pending_buyer', 'Request is not awaiting buyer review.'); PH.assert(remarks && remarks.trim().length >= 5, 'Add review remarks.');
     x.buyerRemarks = remarks; x.buyer = PH.actor().name; x.status = forward ? 'pending_head' : 'rejected';
-    if (forward) PH.Notify.push({ type: 'pending_approval', ref: PH.vendor(x.vendorId).name, to: { roles: ['approver'] }, title: 'Reactivation approval (SCM Head): ' + PH.vendor(x.vendorId).name, body: remarks, link: '#/approvals' }); return x;
+    if (forward) PH.Notify.push({ type: 'pending_approval', ref: PH.vendor(x.vendorId).name, to: { roles: ['approver'] }, title: 'Reactivation approval (Head of Procurement): ' + PH.vendor(x.vendorId).name, body: remarks, link: '#/approvals' }); return x;
   };
   Gov.headDecide = function (id, approve, remarks) {
-    PH.requireRole('approver'); const x = PH.byId('reactivations', id); PH.assert(x && x.status === 'pending_head', 'Request is not awaiting SCM Head approval.'); const v = PH.vendor(x.vendorId);
+    PH.requireRole('approver'); const x = PH.byId('reactivations', id); PH.assert(x && x.status === 'pending_head', 'Request is not awaiting Head of Procurement approval.'); const v = PH.vendor(x.vendorId);
     if (!approve) PH.assert(remarks && remarks.trim().length >= 5, 'Remarks required to reject.'); x.headRemarks = remarks || ''; x.status = approve ? 'approved' : 'rejected';
-    if (approve) { v.lastActivityAt = now(); Gov.setStatus(v, 'active', 'Reactivated – approved by SCM Head', 'SCM Head'); } return x;
+    if (approve) { v.lastActivityAt = now(); Gov.setStatus(v, 'active', 'Reactivated – approved by Head of Procurement', 'Head of Procurement'); } return x;
   };
 
   // ----- MSME certificate -----
@@ -175,7 +175,7 @@
   const tk = (id) => { const t = PH.byId('tickets', id); PH.assert(t, 'Ticket not found', 'NOT_FOUND'); return t; };
   Tkt.get = tk;
   Tkt.visibleTo = (u) => (u.role === 'vendor' ? PH.db().tickets.filter((t) => t.vendorId === u.vendorId) : PH.db().tickets);
-  Tkt.canManage = (u, t) => u.role === 'buyer' || u.role === (PH.cfg().ticketCategories.find((c) => c.id === t.category) || {}).owner || (t.category === 'drawing' && u.role === 'design');
+  Tkt.canManage = (u, t) => u.role === 'buyer' || u.role === (PH.cfg().ticketCategories.find((c) => c.id === t.category) || {}).owner;
   Tkt.create = function (f) {
     const me = PH.actor(); PH.assert(me.role === 'vendor' || me.role === 'buyer', 'Only vendors and buyers can raise tickets.', 'FORBIDDEN');
     const e = {}; if (!f.subject || f.subject.trim().length < 5) e.subject = 'Subject is required (min 5 characters).'; if (!f.description || f.description.trim().length < 10) e.description = 'Describe the issue (min 10 characters).';
@@ -183,9 +183,9 @@
     const vendorId = me.role === 'vendor' ? me.vendorId : f.vendorId; if (!vendorId || !PH.vendor(vendorId)) e.vendorId = 'Select the vendor.';
     if (Object.keys(e).length) PH.fail('Ticket needs attention.', 'VALIDATION', e);
     const refs = f.refs || {}; const rfq = refs.rfq ? PH.byId('rfqs', refs.rfq) : null;
-    const t = { id: PH.nextId('tkt'), subject: f.subject.trim(), description: f.description.trim(), priority: f.priority, category: f.category, status: 'open', vendorId, raisedBy: { name: me.name, role: me.role }, assignedTo: rfq ? rfq.buyer : (me.role === 'buyer' ? me.name : 'Procurement'), ownerRole: cat.owner, refs, createdAt: now(), messages: [{ by: me.name, role: me.role, internal: false, at: now(), text: f.description.trim() }], resolution: null, closedAt: null, reopenCount: 0, forwardedTo: f.category === 'drawing' && refs.rfq ? cat.forward : null, alerts: {} };
+    const t = { id: PH.nextId('tkt'), subject: f.subject.trim(), description: f.description.trim(), priority: f.priority, category: f.category, status: 'open', vendorId, raisedBy: { name: me.name, role: me.role }, assignedTo: rfq ? rfq.buyer : (me.role === 'buyer' ? me.name : 'Procurement'), ownerRole: cat.owner, refs, createdAt: now(), messages: [{ by: me.name, role: me.role, internal: false, at: now(), text: f.description.trim() }], resolution: null, closedAt: null, reopenCount: 0, forwardedTo: f.category === 'technical' && refs.rfq ? cat.forward : null, alerts: {} };
     PH.db().tickets.push(t); PH.audit('ticket', t.id, 'created', t.subject);
-    PH.Notify.push({ type: 'ticket_response', ref: t.id, to: me.role === 'vendor' ? { roles: ['buyer'].concat(cat.owner !== 'buyer' ? [cat.owner] : []).concat(t.forwardedTo ? ['design', 'leader'] : []) } : { vendorId }, title: (me.role === 'vendor' ? 'New ticket ' : 'Query from buyer ') + t.id + ': ' + t.subject, body: t.forwardedTo ? 'Drawing-related RFQ query forwarded to ' + t.forwardedTo.join(', ') : f.description.slice(0, 120), link: '#/tickets/' + t.id }); return t;
+    PH.Notify.push({ type: 'ticket_response', ref: t.id, to: me.role === 'vendor' ? { roles: ['buyer'].concat(cat.owner !== 'buyer' ? [cat.owner] : []).concat(t.forwardedTo ? ['leader'] : []) } : { vendorId }, title: (me.role === 'vendor' ? 'New ticket ' : 'Query from buyer ') + t.id + ': ' + t.subject, body: t.forwardedTo ? 'Technical RFQ query forwarded to ' + t.forwardedTo.join(', ') : f.description.slice(0, 120), link: '#/tickets/' + t.id }); return t;
   };
   Tkt.reply = function (id, text, internal) {
     const t = tk(id); const me = PH.actor(); PH.assert(text && text.trim(), 'Write a message.'); PH.assert(t.status !== 'closed', 'Closed tickets cannot take new messages – reopen it first.');
@@ -229,8 +229,8 @@
     db.onboarding.filter((o) => o.stage === 'approval').forEach((o) => S.Onb.nextApprovals(o).forEach((a) => items.push({ kind: 'onboarding', id: o.id, title: 'Vendor approval – ' + o.vendorName, level: a.role, since: o.decision && o.decision.at, link: '#/onboarding/' + o.id, value: null })));
     db.pans.filter((p) => p.status === 'in_approval').forEach((p) => { const c = S.Matrix.current(p.chain); items.push({ kind: 'pan', id: p.id, title: p.no + ' – ' + PH.byId('rfqs', p.rfqId).title, level: c.role, since: c.since, link: '#/pan/' + p.id, value: p.value, escalated: c.escalated }); });
     db.pos.filter((p) => p.pendingRevision).forEach((p) => { const c = S.Matrix.current(p.pendingRevision.chain); items.push({ kind: 'po_rev', id: p.id, title: 'PO ' + p.id + ' revision ' + p.pendingRevision.rev, level: c.role, since: p.pendingRevision.createdAt, link: '#/po/' + p.id, value: p.pendingRevision.value }); });
-    db.vendors.filter((v) => v.blacklistRequest && v.blacklistRequest.status === 'pending').forEach((v) => items.push({ kind: 'blacklist', id: v.id, title: 'Blacklist – ' + v.name, level: 'SCM Head', since: v.blacklistRequest.at, link: '#/vendors/' + v.id }));
-    db.reactivations.filter((x) => x.status === 'pending_head').forEach((x) => items.push({ kind: 'reactivation', id: x.id, title: 'Reactivation – ' + PH.vendor(x.vendorId).name, level: 'SCM Head', since: x.createdAt, link: '#/vendors/' + x.vendorId }));
+    db.vendors.filter((v) => v.blacklistRequest && v.blacklistRequest.status === 'pending').forEach((v) => items.push({ kind: 'blacklist', id: v.id, title: 'Blacklist – ' + v.name, level: 'Head of Procurement', since: v.blacklistRequest.at, link: '#/vendors/' + v.id }));
+    db.reactivations.filter((x) => x.status === 'pending_head').forEach((x) => items.push({ kind: 'reactivation', id: x.id, title: 'Reactivation – ' + PH.vendor(x.vendorId).name, level: 'Head of Procurement', since: x.createdAt, link: '#/vendors/' + x.vendorId }));
     return items;
   };
 })(typeof window !== 'undefined' ? window : globalThis);

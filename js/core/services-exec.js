@@ -85,12 +85,12 @@
     const e = {}; if (!f.requestedDate) e.requestedDate = 'Requested inspection date is required.'; if (!f.contactName) e.contactName = 'Contact person is required.'; if (!U.isMobile(f.contactPhone)) e.contactPhone = 'Enter a valid 10-digit mobile number.';
     const lines = (f.lines || []).filter((x) => U.num(x.qty) > 0); if (!lines.length) e.lines = 'Add at least one line with quantity.';
     lines.forEach((x) => { const l = po.lines.find((y) => y.no === x.lineNo); if (!l) { e.lines = 'Unknown line.'; return; } const avail = l.readyQty - (l.inspQty || 0); if (U.num(x.qty) > avail) e['qty.' + x.lineNo] = 'Only ' + avail + ' ' + l.uom + ' declared ready and not yet submitted for inspection.'; });
-    const need = Qa.requiredDocs(po); const have = f.docs || {}; need.forEach((d) => { if (!have[d]) e['doc.' + d] = d + ' must be uploaded (QAP / quality documents).'; });
+    const need = Qa.requiredDocs(po); const have = f.docs || {}; need.forEach((d) => { if (!have[d]) e['doc.' + d] = d + ' must be uploaded (quality documents).'; });
     if (Object.keys(e).length) PH.fail('Inspection request has issues.', 'VALIDATION', e);
     const ir = { id: PH.nextId('insp'), poId, vendorId: po.vendorId, lines: lines.map((x) => ({ lineNo: x.lineNo, qty: U.num(x.qty), approved: 0 })), requestedDate: f.requestedDate, contactName: f.contactName, contactPhone: f.contactPhone, remarks: f.remarks || '', docs: have, status: 'requested', createdAt: now(), createdBy: me.name, cycles: [{ n: 1, kind: 'initial', at: now(), lines: lines.map((x) => ({ lineNo: x.lineNo, qty: U.num(x.qty) })), result: null }], sysRef: null };
     lines.forEach((x) => { const l = po.lines.find((y) => y.no === x.lineNo); l.inspQty = (l.inspQty || 0) + U.num(x.qty); });
     PH.db().inspections.push(ir); plog(po, 'Inspection request ' + ir.id);
-    PH.Notify.push({ type: 'quality_inspection', ref: ir.id, to: { roles: ['quality'] }, title: 'Inspection requested: ' + ir.id + ' (PO ' + po.id + ')', body: 'Vendor ' + PH.vendor(po.vendorId).name + ' requested inspection on ' + U.d(f.requestedDate) + '. QAP documents attached.', link: '#/quality/' + ir.id });
+    PH.Notify.push({ type: 'quality_inspection', ref: ir.id, to: { roles: ['quality'] }, title: 'Inspection requested: ' + ir.id + ' (PO ' + po.id + ')', body: 'Vendor ' + PH.vendor(po.vendorId).name + ' requested inspection on ' + U.d(f.requestedDate) + '. quality documents attached.', link: '#/quality/' + ir.id });
     return ir;
   };
   Qa.outstanding = (ir) => ir.lines.map((l) => ({ lineNo: l.lineNo, qty: l.qty - l.approved }));

@@ -15,9 +15,9 @@
   ];
   Onb.get = get;
   Onb.isOpen = (o) => !['rejected', 'cancelled', 'active'].includes(o.stage);
-  Onb.DEPT_ROLE = { purchase: 'buyer', finance: 'finance', quality: 'quality', design: 'design', operations: 'ops' };
-  Onb.DEPT_LABEL = { purchase: 'Purchase / SCM', finance: 'Finance', quality: 'Quality', design: 'Design / Engineering', operations: 'Operations' };
-  Onb.SCREEN_ROLE = { scm: 'buyer', qc: 'quality', design: 'design' };
+  Onb.DEPT_ROLE = { purchase: 'buyer', finance: 'finance', quality: 'quality', operations: 'ops' };
+  Onb.DEPT_LABEL = { purchase: 'Purchase / SCM', finance: 'Finance', quality: 'Quality', operations: 'Operations' };
+  Onb.SCREEN_ROLE = { scm: 'buyer', qc: 'quality', ops: 'ops' };
 
   Onb.requiredDepts = (cats) => {
     const m = PH.cfg().reviewMatrix; const set = new Set();
@@ -78,7 +78,7 @@
       consolidation: null, decision: null, approvals: [], erp: null, vendorId: null, cycle: 1, cycles: [], queries: [], log: [],
     };
     db.onboarding.push(o); log(o, 'Vendor recommended: ' + o.vendorName);
-    PH.Notify.push({ type: 'onboarding', ref: o.id, to: { roles: ['buyer', 'quality', 'design'] }, title: 'Initial screening needed: ' + o.vendorName, body: 'New vendor recommendation awaits SCM, QC and Design screening.', link: '#/onboarding/' + o.id });
+    PH.Notify.push({ type: 'onboarding', ref: o.id, to: { roles: ['buyer', 'quality', 'ops'] }, title: 'Initial screening needed: ' + o.vendorName, body: 'New vendor recommendation awaits Procurement, Quality and Operations screening.', link: '#/onboarding/' + o.id });
     return { merged: false, request: o };
   };
 
@@ -91,7 +91,7 @@
     if (decision === 'fail') PH.assert(remarks && remarks.trim().length >= 5, 'Remarks are mandatory when failing a screening.');
     o.screening[dept] = { decision, remarks: remarks || '', by: PH.actor().name, at: now() };
     log(o, dept.toUpperCase() + ' screening: ' + decision);
-    const all = ['scm', 'qc', 'design'].every((d) => o.screening[d]);
+    const all = ['scm', 'qc', 'ops'].every((d) => o.screening[d]);
     if (decision === 'fail') { o.stoppedAt = o.stage; o.stage = 'rejected'; o.decision = { approved: false, by: PH.actor().name, at: now(), remarks: 'Failed initial screening (' + dept.toUpperCase() + '): ' + remarks }; log(o, 'Rejected at screening'); }
     else if (all) { o.stage = 'invite'; log(o, 'Screening complete – ready for invitation'); PH.Notify.push({ type: 'onboarding', ref: o.id, to: { roles: ['buyer'] }, title: 'Screening complete: ' + o.vendorName, body: 'Send the registration invitation to the vendor.', link: '#/onboarding/' + o.id }); }
     return o;
@@ -100,7 +100,7 @@
   // ---- Step 3: invitation (SCM only) ----
   Onb.invite = function (id) {
     const o = get(id); PH.requireRole('buyer');
-    PH.assert(o.stage === 'invite', 'Initial screening must be completed (SCM, QC and Design) before inviting the vendor.');
+    PH.assert(o.stage === 'invite', 'Initial screening must be completed (Procurement, Quality and Operations) before inviting the vendor.');
     const db = PH.db(); const uid = 'u-' + o.id.toLowerCase();
     if (!db.users.find((u) => u.id === uid)) db.users.push({ id: uid, name: o.contactName, email: o.contactEmail, role: 'vendor', vendorId: null, onbId: o.id, active: true, dept: 'Vendor', password: 'Demo@123' });
     o.invitation = { sentAt: now(), by: PH.actor().name, token: U.hash(o.id + o.vendorName).toString(36), userId: uid, link: '#/register/' + U.hash(o.id).toString(36) };
@@ -136,10 +136,10 @@
     else if (addrs.length > 1 && addrs.filter((a) => a.primary).length !== 1) e.addresses = 'Mark exactly one address as primary.';
     addrs.forEach((a, i) => { if (!a.line || !a.city || !/^[0-9]{6}$/.test(a.pin || '')) e['addresses.' + i] = 'Address ' + (i + 1) + ': line, city and a 6-digit PIN are required.'; });
     if (fin.netWorth === '' || fin.netWorth == null || isNaN(U.num(fin.netWorth))) e['financial.netWorth'] = 'Net worth is required.';
-    const cibil = U.num(fin.cibil); if (!(cibil >= 300 && cibil <= 900)) e['financial.cibil'] = 'CIBIL score must be between 300 and 900.';
+    const cibil = U.num(fin.cibil); if (!(cibil >= 300 && cibil <= 900)) e['financial.cibil'] = 'Credit score must be between 300 and 900.';
     if (!fin.holder) e['financial.holder'] = 'Account holder name is required.';
     if (!U.isAcct(fin.accountNo)) e['financial.accountNo'] = 'Account number must be 9–18 digits.';
-    if (!U.isIFSC(fin.ifsc)) e['financial.ifsc'] = 'IFSC format is invalid (e.g. HDFC0001234).';
+    if (!U.isIFSC(fin.ifsc)) e['financial.ifsc'] = 'IFSC format is invalid (e.g. SAMP0001234).';
     if (!r.nda || !r.nda.file) e.nda = 'Upload the duly signed NDA (shared by the buyer outside the portal).';
     if (!r.coc || !r.coc.ack) e.coc = 'Acknowledge the Supplier Code of Conduct.';
     const m = r.msme || {};
@@ -262,20 +262,20 @@
     PH.assert(decision === 'approve', 'Invalid decision');
     if (c.recommendation === 'not_qualify') PH.assert(remarks && remarks.trim().length >= 15, 'Approving a vendor the consolidation does not recommend needs a justification (min 15 characters).');
     o.decision = { approved: true, by: PH.actor().name, at: now(), remarks: remarks || '' };
-    o.approvals = [{ role: 'Head Design', group: 1 }, { role: 'Head QC', group: 1 }, { role: 'Head SCM', group: 2 }, { role: 'Head Finance', group: 3 }].map((a) => Object.assign(a, { name: PH.cfg().approvers[a.role] || PH.cfg().approvers['SCM Head'], status: 'pending', by: null, at: null, remarks: '' }));
+    o.approvals = [{ role: 'Head Operations', group: 1 }, { role: 'Head Quality', group: 1 }, { role: 'Head Procurement', group: 2 }, { role: 'Head Finance', group: 3 }].map((a) => Object.assign(a, { name: PH.cfg().approvers[a.role] || PH.cfg().approvers['Head of Procurement'], status: 'pending', by: null, at: null, remarks: '' }));
     o.stage = 'approval'; log(o, 'Qualified – sent for executive approval');
-    PH.Notify.push({ type: 'pending_approval', ref: o.id, to: { roles: ['approver'] }, title: 'Vendor approval pending: ' + o.vendorName, body: 'Head Design and Head QC (parallel), then Head SCM, then Head Finance.', link: '#/approvals' });
+    PH.Notify.push({ type: 'pending_approval', ref: o.id, to: { roles: ['approver'] }, title: 'Vendor approval pending: ' + o.vendorName, body: 'Head Operations and Head Quality (parallel), then Head Procurement, then Head Finance.', link: '#/approvals' });
     return o;
   };
 
-  // ---- Step 10: executive approval (Design ∥ QC → SCM → Finance) ----
+  // ---- Step 10: executive approval (Operations ∥ Quality → Procurement → Finance) ----
   Onb.nextApprovals = (o) => { const p = o.approvals.filter((a) => a.status === 'pending'); if (!p.length) return []; const g = Math.min(...p.map((a) => a.group)); return p.filter((a) => a.group === g); };
   Onb.approve = function (id, role, decision, remarks) {
     const o = get(id); PH.requireRole('approver');
     PH.assert(o.stage === 'approval', 'Request is not awaiting executive approval.');
     const step = o.approvals.find((a) => a.role === role); PH.assert(step, 'Unknown approval step.');
     PH.assert(step.status === 'pending', 'This approval is already recorded.');
-    PH.assert(Onb.nextApprovals(o).includes(step), 'Approval order: ' + role + ' can act only after the earlier approval group is complete (Design & QC → SCM → Finance).');
+    PH.assert(Onb.nextApprovals(o).includes(step), 'Approval order: ' + role + ' can act only after the earlier approval group is complete (Operations & Quality → Procurement → Finance).');
     PH.assert(['approved', 'rejected'].includes(decision), 'Invalid decision');
     if (decision === 'rejected') PH.assert(remarks && remarks.trim().length >= 5, 'Rejection remarks are mandatory.');
     Object.assign(step, { status: decision, by: step.name, at: now(), remarks: remarks || '' });

@@ -7,9 +7,9 @@
 
   // ---------- login: pick a module / role ----------
   Pages.personaMeta = {
-    'u-anita': { label: 'Procurement', grp: 'Internal' }, 'u-rohan': { label: 'Quality', grp: 'Internal' }, 'u-dev': { label: 'Design', grp: 'Internal' }, 'u-farah': { label: 'Finance', grp: 'Internal' }, 'u-neha': { label: 'Operations', grp: 'Internal' },
+    'u-anita': { label: 'Procurement', grp: 'Internal' }, 'u-rohan': { label: 'Quality', grp: 'Internal' }, 'u-farah': { label: 'Finance', grp: 'Internal' }, 'u-neha': { label: 'Operations', grp: 'Internal' },
     'u-meera': { label: 'Approver', grp: 'Control' }, 'u-arvind': { label: 'Management', grp: 'Control' }, 'u-karan': { label: 'Admin', grp: 'Control' },
-    'u-v01': { label: 'Vendor – Precision Forgings', grp: 'Vendors' }, 'u-v02': { label: 'Vendor – Apex Castings', grp: 'Vendors' }, 'u-v03': { label: 'Vendor – Sterling Fasteners', grp: 'Vendors' }, 'u-v09': { label: 'Vendor – Kestrel Wire (dormant)', grp: 'Vendors' }, 'u-onb-0001': { label: 'New vendor – Orbit Precision (invited)', grp: 'Vendors' },
+    'u-v01': { label: 'Vendor – Summit Industrial', grp: 'Vendors' }, 'u-v02': { label: 'Vendor – Harbor Packaging', grp: 'Vendors' }, 'u-v03': { label: 'Vendor – Evergreen Office Supplies', grp: 'Vendors' }, 'u-v09': { label: 'Vendor – Kestrel Services (dormant)', grp: 'Vendors' }, 'u-onb-0001': { label: 'New vendor – Orbit Components (invited)', grp: 'Vendors' },
   };
   Pages.login = function () {
     const users = PH.db().users.filter((u) => Pages.personaMeta[u.id]); const grps = U.groupBy(users, (u) => Pages.personaMeta[u.id].grp);
@@ -84,9 +84,9 @@
   }
 
   function reviewerDash(u) {
-    const d = db(); const dept = { design: 'design', ops: 'operations', finance: 'finance', quality: 'quality' }[u.role]; const mine = d.onboarding.filter((o) => o.stage === 'review' && o.reviews.some((r) => r.dept === dept && !r.verdict && S.Onb.canReview(o, dept)));
-    const scr = d.onboarding.filter((o) => o.stage === 'screening' && !o.screening[u.role === 'design' ? 'design' : 'qc']);
-    const toReceive = d.pos.filter((p) => p.status === 'accepted' && p.lines.some((l) => PH.Sys.dispatchedOn(p.id, l.no) - l.physicalQty > 0)).length; return greet(u) + kpiRow([{ label: 'Reviews waiting', value: mine.length, tone: 'warn', href: '#/onboarding' }, u.role === 'ops' ? { label: 'Receipts pending', value: toReceive, tone: 'teal', href: '#/grn' } : { label: 'Open drawing queries', value: d.tickets.filter((t) => t.category === 'drawing' && !['resolved', 'closed'].includes(t.status)).length, href: '#/tickets' }, { label: 'Screenings waiting', value: u.role === 'design' ? scr.length : 0, tone: 'teal', href: '#/onboarding' }, { label: 'Open drawing queries', value: d.tickets.filter((t) => t.category === 'drawing' && !['resolved', 'closed'].includes(t.status)).length, href: '#/tickets' }]) + secH('Waiting for your review') + UI.card({ flush: true, body: UI.table({ cols: [{ h: 'Request', r: (o) => '<b>' + o.id + '</b>' }, { h: 'Vendor', r: (o) => esc(o.vendorName) }, { h: 'Mode', r: (o) => UI.chip(o.mode, 'blue') }, { h: 'Submitted', r: (o) => U.ago(o.regSubmittedAt) }], rows: mine, href: (o) => '#/onboarding/' + o.id, empty: UI.empty('✅', 'No reviews waiting for you') }) });
+    const d = db(); const dept = { ops: 'operations', finance: 'finance', quality: 'quality' }[u.role]; const mine = d.onboarding.filter((o) => o.stage === 'review' && o.reviews.some((r) => r.dept === dept && !r.verdict && S.Onb.canReview(o, dept)));
+    const scr = d.onboarding.filter((o) => o.stage === 'screening' && !o.screening.ops);
+    const toReceive = d.pos.filter((p) => p.status === 'accepted' && p.lines.some((l) => PH.Sys.dispatchedOn(p.id, l.no) - l.physicalQty > 0)).length; return greet(u) + kpiRow([{ label: 'Reviews waiting', value: mine.length, tone: 'warn', href: '#/onboarding' }, { label: 'Receipts pending', value: toReceive, tone: 'teal', href: '#/grn' }, { label: 'Screenings waiting', value: scr.length, tone: 'teal', href: '#/onboarding' }, { label: 'Open technical queries', value: d.tickets.filter((t) => t.category === 'technical' && !['resolved', 'closed'].includes(t.status)).length, href: '#/tickets' }]) + secH('Waiting for your review') + UI.card({ flush: true, body: UI.table({ cols: [{ h: 'Request', r: (o) => '<b>' + o.id + '</b>' }, { h: 'Vendor', r: (o) => esc(o.vendorName) }, { h: 'Mode', r: (o) => UI.chip(o.mode, 'blue') }, { h: 'Submitted', r: (o) => U.ago(o.regSubmittedAt) }], rows: mine, href: (o) => '#/onboarding/' + o.id, empty: UI.empty('✅', 'No reviews waiting for you') }) });
   }
 
   function adminDash(u) {
@@ -117,7 +117,7 @@
   PH.route('/dashboard', (p, u) => {
     PH.App.title = 'Dashboard';
     if (u.role === 'vendor') return vendorDash(u);
-    return { buyer: buyerDash, quality: qualityDash, approver: approverDash, leader: leaderDash, finance: financeDash, design: reviewerDash, ops: reviewerDash, admin: adminDash }[u.role](u);
+    return { buyer: buyerDash, quality: qualityDash, approver: approverDash, leader: leaderDash, finance: financeDash, ops: reviewerDash, admin: adminDash }[u.role](u);
   });
 
   // ---------- approvals inbox ----------

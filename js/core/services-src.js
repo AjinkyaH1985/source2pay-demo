@@ -25,8 +25,8 @@
     const c = PH.cfg(); const out = []; const band = c.approvalMatrix.find((b) => b.upTo == null || value <= b.upTo);
     out.push('Value ' + U.inrC(value) + ' falls in the band ' + (band.upTo ? 'up to ' + U.inrC(band.upTo) : 'above ' + U.inrC(c.approvalMatrix[c.approvalMatrix.length - 2].upTo)));
     const pt = c.paymentTerms.find((p) => p.id === paymentTerms) || { days: 30, advance: 0 }; const adv = advancePct != null ? advancePct : pt.advance;
-    if (adv > 0) out.push('Advance payment (' + adv + '%) adds Finance Controller'); if (adv > c.approvalConditions.advanceHighPct) out.push('Advance above ' + c.approvalConditions.advanceHighPct + '% adds CFO');
-    if (pt.days < c.approvalConditions.shortTermDays) out.push('Payment term shorter than ' + c.approvalConditions.shortTermDays + ' days adds SCM Head');
+    if (adv > 0) out.push('Advance payment (' + adv + '%) adds Finance Manager'); if (adv > c.approvalConditions.advanceHighPct) out.push('Advance above ' + c.approvalConditions.advanceHighPct + '% adds CFO');
+    if (pt.days < c.approvalConditions.shortTermDays) out.push('Payment term shorter than ' + c.approvalConditions.shortTermDays + ' days adds Head of Procurement');
     return out;
   };
   Matrix.current = (chain) => chain.find((x) => x.status === 'pending') || null;
@@ -73,13 +73,38 @@
     if (v.consecutiveHigh >= 4) flags.push('Quoted high in ' + v.consecutiveHigh + ' consecutive RFQs');
     return { eligible: !reasons.length, reasons, flags, score: sc };
   };
+  // Enter a new requirement (purchase requisition) – lets a user start the cycle with their own data.
+  Rfq.createRequirement = function (f) {
+    PH.requireRole('buyer'); f = f || {}; const c = PH.cfg(); const e = {};
+    if (!f.title || f.title.trim().length < 5) e.title = 'Give the requirement a title (min 5 characters).';
+    const bu = c.businessUnits.find((b) => b.id === f.bu); if (!bu) e.bu = 'Select a business unit.';
+    if (!f.commodity || !c.commodities.includes(f.commodity)) e.commodity = 'Select a commodity.';
+    if (!f.project || !f.project.trim()) e.project = 'Enter the project or cost centre.';
+    const rows = (f.items || []).filter((x) => x && ((x.desc && x.desc.trim()) || x.qty || x.rate));
+    if (!rows.length) e.items = 'Add at least one item.';
+    const items = rows.map((x, i) => {
+      const n = i + 1, qty = U.num(x.qty), rate = U.num(x.rate), days = x.days === '' || x.days == null ? 30 : U.num(x.days);
+      if (!x.desc || x.desc.trim().length < 3) e['item' + n + '.desc'] = 'Describe item ' + n + '.';
+      if (!(qty > 0)) e['item' + n + '.qty'] = 'Quantity must be greater than 0.';
+      if (!(rate > 0)) e['item' + n + '.rate'] = 'Budget rate must be greater than 0.';
+      if (!c.uoms.includes(x.uom)) e['item' + n + '.uom'] = 'Select a unit.';
+      if (!(days >= 1 && days <= 730)) e['item' + n + '.days'] = 'Required-in days must be 1–730.';
+      return { no: n, code: 'NEW-' + U.pad(n, 3), desc: (x.desc || '').trim(), hsn: (x.hsn || '').trim() || '—', qty, uom: x.uom, reqDate: U.iso(U.addDays(PH.now(), days)), budgetRate: rate, benchmarkRate: rate, systemRate: rate, hist: { vendor: 'No purchase history', date: U.iso(PH.now()), rate } };
+    });
+    if (Object.keys(e).length) PH.fail('Requirement needs attention.', 'VALIDATION', e);
+    const S = PH.db().erp; const no = PH.nextId('pr'); const wbs = bu.id + '-NEW-' + no.slice(-4);
+    const value = U.round(U.sum(items, (i) => i.qty * i.budgetRate), 2);
+    const pr = { no, title: f.title.trim(), bu: bu.id, project: f.project.trim(), wbs, commodity: f.commodity, plant: 'Main Plant, Pune', date: U.iso(PH.now()), requester: PH.actor().name, status: 'Released', items };
+    S.prs.push(pr); S.budgets[wbs] = { project: pr.project, total: U.round(value * 1.25, 2), committed: 0 };
+    return pr;
+  };
   Rfq.create = function ({ prNo, templateId, title, poType }) {
     PH.requireRole('buyer');
     const pr = PH.Sys.getPR(prNo); PH.assert(pr, 'A valid released Purchase Requisition is required to create an RFQ.');
     const db = PH.db(); const tpl = PH.cfg().rfqTemplates.find((t) => t.id === templateId) || PH.cfg().rfqTemplates[0];
     const r = {
       id: PH.nextId('rfq'), prNo: pr.no, title: (title && title.trim()) || pr.title, bu: pr.bu, project: pr.project, wbs: pr.wbs, commodity: pr.commodity, plant: pr.plant, poType: poType || 'PO1',
-      buyer: PH.actor().name, lead: PH.cfg().approvers['Commodity Lead'], templateId: tpl.id, status: 'draft', createdAt: now(), publishedAt: null, deadline: null, accessUntil: null,
+      buyer: PH.actor().name, lead: PH.cfg().approvers['Category Manager'], templateId: tpl.id, status: 'draft', createdAt: now(), publishedAt: null, deadline: null, accessUntil: null,
       items: pr.items.map((i) => Object.assign({}, U.clone(i), { deliveryDate: i.reqDate })),
       docs: tpl.docs.map((n, i) => ({ id: 'D' + (i + 1), name: n + '.pdf', type: n, protected: true })), vendors: [], accessLog: [], log: [], sysRef: { pr: pr.no, wbs: pr.wbs, fetchedAt: now() }, prCreatedAt: pr.date, defaults: { paymentTerm: tpl.paymentTerm, incoterm: tpl.incoterm }, modelLink: null,
     };

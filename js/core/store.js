@@ -1,7 +1,7 @@
 /* Source2Pay – local-storage backed store, demo clock, audit trail, RBAC helpers */
 (function (g) {
   const PH = (g.PH = g.PH || {});
-  const KEY = 'ph.db.v1', SKEY = 'ph.session.v1', VER = 11;
+  const KEY = 'ph.db.v1', SKEY = 'ph.session.v1', VER = 12;
 
   // Resilient storage (falls back to memory when localStorage is blocked, e.g. private mode / Node tests)
   const mem = {};
@@ -56,13 +56,14 @@
       case 'dsp': return 'DSP-' + PH.U.pad(n);
       case 'tkt': return 'TKT-' + PH.U.pad(n);
       case 'pay': return 'PAY-2026-' + PH.U.pad(n);
+      case 'pr': return String(1000004600 + n);
       case 'msg': return 'MSG-' + PH.U.pad(n, 6);
       case 'notif': return 'N-' + PH.U.pad(n, 5);
       case 'q': return 'Q-' + PH.U.pad(n);
       case 'rdy': return 'RDY-' + PH.U.pad(n);
       case 'react': return 'REA-' + PH.U.pad(n);
       case 'chg': return 'CHG-' + PH.U.pad(n);
-      case 'prc': return 'PRC-' + PH.U.pad(n);
+      case 'prc': return 'RTL-' + PH.U.pad(n);
       case 'advice': return 'ADV-' + PH.U.pad(n);
       default: return kind + '-' + n;
     }
