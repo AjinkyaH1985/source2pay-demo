@@ -62,7 +62,6 @@
     return '<div class="shell"><aside class="sidebar" id="sidebar"><div class="brand"><div class="logo">S</div><div><b>Source2Pay</b><small>by Ajinkya Hatekar</small></div></div><nav class="nav" aria-label="Main">' + side + '</nav></aside>' +
       '<div class="main"><header class="topbar no-print"><button class="iconbtn menu-btn" data-act="toggleNav" aria-label="Menu">☰</button><div class="crumbs"><b>' + esc(PH.ROLES[u.role].label) + '</b>' + (u.role === 'vendor' ? ' · ' + esc(u.name) : '') + (off ? ' · <span class="chip amber nodot">' + U.d(PH.now()) + '</span>' : '') + '</div>' +
       (Tour.has() ? '<button class="btn sm" id="btn-tour" data-act="startTour" title="Walk through this module">Tour</button>' : '') +
-      '<div class="pop-anchor" style="position:relative"><button class="iconbtn" id="btn-demo" data-act="pop" data-p="demo" title="Demo menu" aria-label="Demo menu">⋯</button></div>' +
       '<button class="iconbtn" data-act="toggleTheme" title="Light / dark" aria-label="Toggle theme">◐</button>' +
       '<div class="pop-anchor" style="position:relative"><button class="iconbtn" id="btn-bell" data-act="pop" data-p="bell" aria-label="Notifications">🔔' + (unread ? '<span class="bdg">' + Math.min(unread, 99) + '</span>' : '') + '</button></div>' +
       '<div class="pop-anchor" style="position:relative"><button class="userbtn" id="btn-user" data-act="pop" data-p="user">' + UI.avatar(u.name, 'sm') + '<div><div class="un">' + esc(PH.ROLES[u.role].label) + '</div><div class="ur">Switch module</div></div></button></div></header>' +
@@ -83,9 +82,6 @@
       anchor = document.getElementById('btn-user').parentNode;
       const users = PH.db().users.filter((x) => PH.Pages.personaMeta[x.id]);
       html = '<div class="pop wide"><div class="pop-b">' + users.map((x) => '<a class="pop-i persona-item" href="#" data-act="switchUser" data-id="' + x.id + '">' + UI.avatar(PH.Pages.personaMeta[x.id].label) + '<div><div class="pt">' + esc(PH.Pages.personaMeta[x.id].label) + (x.id === u.id ? ' ✓' : '') + '</div></div></a>').join('') + '</div><a class="pop-i" href="#" data-act="logout"><b>Sign out</b></a></div>';
-    } else if (p === 'demo') {
-      anchor = document.getElementById('btn-demo').parentNode; const d = PH.db().clock.days;
-      html = '<div class="pop"><div class="pop-b"><div class="pop-i static"><div class="pt">Fast-forward time</div><div class="ps">Triggers dormancy, MSME expiry, overdue approvals and payments.</div><div class="row wrap gap-sm mt">' + [7, 30, 90].map((n) => '<button class="btn xs" data-act="travel" data-d="' + n + '">+' + n + ' d</button>').join('') + (d ? '<button class="btn xs ghost" data-act="travel" data-d="reset">Today</button>' : '') + '</div></div><a class="pop-i" href="#" data-act="resetData"><div class="pt">Reset demo data</div><div class="ps">Restore the original sample data.</div></a></div></div>';
     }
     if (anchor) anchor.insertAdjacentHTML('beforeend', html);
   };
